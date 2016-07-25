@@ -75,16 +75,14 @@ def populate_valid_info(basePath, driverFolder, videoName):
     frameNum = 0
     for character in len(line):
          validTarget.append(atoi(character))
-         validId.append(str(driverFolder) + '_' + str(glassFolder) + '_' + \
+         validId.append(str(driverFolder) +  '_' + \
                         videoName.split('.')[0] + '_' + str(frameNum))
          frameNum += 1
 
-    validId = np.array(trainId)
-    validTarget = np.array(trainTarget)
+    validId = np.array(validId)
+    validTarget = np.array(validTarget)
 
     return validId, validTarget
-
-def read_train_targets():
 
 def read_validation_targets():
     validId = np.empty((0), dtype='str')
