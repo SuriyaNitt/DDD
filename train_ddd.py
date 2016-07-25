@@ -77,7 +77,24 @@ def CNN_model(frameHeight, frameWidth):
     18 in training set and 
     4 in validation set
 '''
-def run_cross_validation(nfolds=11):
+def run_cross_validation(numFolds=11):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
+    batchSize = read_config('batchSize')
+    numEpochs = 50
+    randomState = 51
+    patienceFactor = 5
 
+    trainTarget, trainId, driverId = read_train_targets()
+    validationTarget, validationId = read_validation_targets()
+    numUniqueDrivers = 22
 
+    # Model Initialization
+    cnnModel = Sequential()
+    # Splitting the training data into train set and validation set in k combinations
+    kf = KFold(numUniqueDrivers, n_folds=numFolds, shuffle=True, random_state=randomState)
+ 
+    if not os.path.isdir('fold_loss'):
+        os.mkdir('fold_loss')
+    historyFileName = './fold_loss/history.txt'
+    historyFile = open(historyFileName, 'w')
+    historyFile.write('Fold, Loss\n')
