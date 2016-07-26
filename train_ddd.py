@@ -77,6 +77,7 @@ def run_cross_validation(numFolds=11):
     numEpochs = 50
     randomState = 51
     patienceFactor = 5
+    foldNum = 0
 
     trainTarget, trainId, driverId, uniqueDrivers = load_data.read_train_targets()
     validationTarget, validationId = load_data.read_validation_targets()
@@ -102,3 +103,11 @@ def run_cross_validation(numFolds=11):
         uniqueListValid = [uniqueDrivers[i] for i in test_drivers]
         crossValidTarget, crossValidId, crossValidDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListValid)        
         
+        print('\nStart KFold number {} from {}'.format(foldNum+1, numFolds))
+        print('Split train: ', len(crossTrainTarget))
+        print('Split valid: ', len(crossValidTarget))
+        print('Train drivers: ', uniqueListTrain)
+        print('Test drivers: ', uniqueListValid)
+        
+        for epoch in range(numEpochs):
+            print ('Epoch {} of {}'.format(epoch+1, numEpochs))

@@ -200,4 +200,15 @@ def read_validation_data(frameHeight, frameWidth, batchList):
     return validationData
     
 def copy_selected_drivers(trainTarget, trainId, driverId, driverList):
-    
+    target = []
+    trainIndex = []
+    driverIndex = []
+    for i in range(len(driverId)):
+        if driverId[i] in driverList:
+            target.append(trainTarget[i])
+            trainIndex.append(trainId[i])
+            driverIndex.append(driverId[i])
+    target = np.array(target)
+    trainIndex = np.array(trainIndex)
+    driverIndex = np.array(driverIndex)
+    return target, trainIndex, driverIndex
