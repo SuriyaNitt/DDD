@@ -1,5 +1,7 @@
 import os, glob, re
 import numpy as np
+import load_avi
+import hickle
 
 def atoi(text):
     return int(text) if text.isdigit() else text
@@ -40,6 +42,7 @@ def read_train_targets():
     driverId = np.empty((0), dtype='str')
     trainId = np.empty((0), dtype='str')
     trainTarget = np.empty((0), dtype='int8')
+    uniqueDrivers = np.empty((0), dtype='str's)
     # Check the existence of data directory
     if not os.path.isdir('../input/Training_Dataset'):
         print('Training Dataset is not found in path\n \
@@ -61,8 +64,9 @@ def read_train_targets():
                 driverId = np.append(driverId, driverIdLocal, axis=0)
                 trainId = np.append(trainId, trainIdLocal, axid=0)
                 trainTarget = np.append(trainTarget, trainTargetLocal, axis=0)
+        uniqueDrivers = np.append(uniqueDrivers, str(driverFolder), axis=0)
 
-    return driverId, trainId, trainTarget
+    return driverId, trainId, trainTarget, uniqueDrivers
 
 def populate_valid_info(basePath, driverFolder, videoName):
     validId = []
@@ -106,3 +110,94 @@ def read_validation_targets():
                 validTarget = np.append(validTarget, validTargetLocal, axis=0)
 
     return validId, validTarget
+
+def read_train_data(frameHeight, frameWidth, batchList):    
+    print('Loading training data\n')
+    
+    trainingData = np.empty((0, frameHeight, frameWidth), dtype='float32')
+    prevId = ''
+    uniqueVideosList = []
+    instanceCount = 0
+    
+    for instance in batchList:
+        arr = instance.split('_')
+        driverId = arr[0]
+        glassInfo = arr[1]
+        videoName = arr[2]
+        
+        id = driverId + glassInfo + videoName
+        if id != prevId:
+            uniqueVideosList.append(instanceCount)
+        instanceCount += 1
+    
+    for unqVidIdx1, unqVidIdx2 in zip(uniqueVideosList[:-1], uniqueVideosList[1:]):
+        startFrame = batchList[unqVidIdx1].split('_')[3]
+        endFrame = batchList[unqVidIdx2-1].split('_')[3]
+        
+        driverId = batchList[unqVidIdx1].split('_')[0]
+        glassInfo = batchList[unqVidIdx1].split('_')[1]
+        videoName = batchList[unqVidIdx1].split('_')[2]
+        
+        fileName = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
+                                str(glassInfo), str(videoName) + '.avi')
+        videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame)
+        trainingData = np.append(trainingData, videoNP, axis=0)
+        
+    startFrame = batchList[uniqueVideosList[-1]].split('_')[3]
+    endFrame = batchList[-1].split('_')[3]
+    
+    driverId = batchList[uniqueVideosList[-1]].split('_')[0]
+    glassInfo = batchList[uniqueVideosList[-1]].split('_')[1]
+    videoName = batchList[uniqueVideosList[-1]].split('_')[2]
+    
+    fileName = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
+                                str(glassInfo), str(videoName) + '.avi')
+    videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame)
+    trainingData = np.append(trainingData, videoNP, axis=0)
+        
+    return trainingData    
+    
+def read_validation_data(frameHeight, frameWidth, batchList):
+    print('Loading validation data\n')
+    
+    validationData = np.empty((0, frameHeight, frameWidth), dtype='float32')
+    prevId = ''
+    uniqueVideosList = []
+    instanceCount = 0
+    
+    for instance in batchList:
+        arr = instance.split('_')
+        driverId = arr[0]
+        videoName = arr[1]
+        id = driverId + videoName
+        if id != prevId:
+            uniqueVideosList.append(instanceCount)
+        instanceCount += 1
+    
+    for unqVidIdx1, unqVidIdx2 in zip(uniqueVideosList[:-1], uniqueVideosList[1:]):
+        startFrame = batchList[unqVidIdx1].split('_')[2]
+        endFrame = batchList[unqVidIdx2-1].split('_')[2]
+        
+        driverId = batchList[unqVidIdx1].split('_')[0]
+        videoName = batchList[unqVidIdx1].split('_')[1]
+        
+        fileName = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
+                                str(videoName) + '.avi')
+        videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame)
+        validationData = np.append(validationData, videoNP, axis=0)
+        
+    startFrame = batchList[uniqueVideosList[-1]].split('_')[2]
+    endFrame = batchList[-1].split('_')[2]
+    
+    driverId = batchList[uniqueVideosList[-1]].split('_')[0]
+    videoName = batchList[uniqueVideosList[-1]].split('_')[1]
+    
+    fileName = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
+                            str(videoName) + '.avi')
+    videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame)
+    validationData = np.append(validationData, videoNP, axis=0)
+        
+    return validationData
+    
+def copy_selected_drivers(trainTarget, trainId, driverId, driverList):
+    

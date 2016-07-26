@@ -1,32 +1,23 @@
-import cv2
+
 import numpy as np
 import os
-import glob
-import hickle
 import warnings
 
 warnings.filterwarnings("ignore")
 
+from sklearn.cross_validation import KFold
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge
-from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import SGD, Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.utils import np_utils
-from keras.models import model_from_json
-from sklearn.metrics import log_loss
-from keras.regularizers import l1, l2, l1l2, activity_l1, activity_l2, activity_l1l2
+from keras.layers.core import Dense, Dropout, Activation, Flatten
+from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.optimizers import Adam
+from keras.regularizers import l2
 from keras.utils.visualize_util import plot
-
-from keras import backend as K
-from subprocess import call
 
 from multiprocessing import Pool, Array
 import threading
 import multiprocessing
 
-from load_avi import load_avi_into nparray
+import load_data
 from read_config import read_config
 
 np.random.seed(2016)
@@ -70,6 +61,9 @@ def CNN_model(frameHeight, frameWidth):
     model.add(Activation('softmax'))
 
     model.compile(Adam(lr=1e-3), loss='categorical_crossentropy')
+    
+    plot(model, to_file='model.png')
+    
     return model
 
 '''
@@ -84,9 +78,9 @@ def run_cross_validation(numFolds=11):
     randomState = 51
     patienceFactor = 5
 
-    trainTarget, trainId, driverId = read_train_targets()
-    validationTarget, validationId = read_validation_targets()
-    numUniqueDrivers = 22
+    trainTarget, trainId, driverId, uniqueDrivers = load_data.read_train_targets()
+    validationTarget, validationId = load_data.read_validation_targets()
+    numUniqueDrivers = 18
 
     # Model Initialization
     cnnModel = Sequential()
@@ -98,3 +92,13 @@ def run_cross_validation(numFolds=11):
     historyFileName = './fold_loss/history.txt'
     historyFile = open(historyFileName, 'w')
     historyFile.write('Fold, Loss\n')
+    historyFile.close()
+    
+    for train_drivers, test_drivers in kf:
+        cnnModel = CNN_model(frameHeight, frameWidth)
+        
+        uniqueListTrain = [uniqueDrivers[i] for i in train_drivers]
+        crossTrainTarget, crossTrainId, crossTrainDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListTrain)
+        uniqueListValid = [uniqueDrivers[i] for i in test_drivers]
+        crossValidTarget, crossValidId, crossValidDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListValid)        
+        

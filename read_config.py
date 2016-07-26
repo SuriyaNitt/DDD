@@ -4,6 +4,7 @@
 def read_config(param):
     configFile = open('config.txt', 'r')
     value = 0
+    found = 0
     while(1):
         line = configFile.readline()
         if(line == '')
@@ -11,5 +12,11 @@ def read_config(param):
         arr = line.strip().split(',')
         if arr[0] == param:
             value = arr[1]
+            found = 1
             break
+        
+    if found == 0:
+        print('No param called:{} found'.format(param))
+    else:
+        print('Param:{} found'.format(param))        
     return value
