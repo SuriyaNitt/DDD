@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+from read_config import read_config
 '''
     Function to load avi file from disc in required frame resolution
 '''
@@ -8,14 +8,22 @@ import numpy as np
 def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame):
     video = cv2.VideoCapture(fileName)
     numFrames = 0
+    debugMode = read_config('debugMode')
     
-    videoNP = np.empty((0, frameHeight, frameWidth), dtype='float32')
+    videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
     while(video.isOpened()):
         if startFrame <= numFrames and endFrame >= numFrames:
             ret, frame = video.read()
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
+            resized = resized.reshape(1, frameHeight, frameWidth)
+            #if debugMode:
+            #    print('resized shape:{}'.format(resized.shape))
             videoNP = np.append(videoNP, [resized], axis=0)
+            #if debugMode:
+            #    print('videoNP shape:{}'.format(videoNP.shape))
+        if endFrame < numFrames:
+            break
         numFrames += 1
 
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))

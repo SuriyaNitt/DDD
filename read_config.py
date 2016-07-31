@@ -2,12 +2,12 @@
     Read the param value from config
 '''
 def read_config(param):
-    configFile = open('config.txt', 'r')
+    configFile = open('config.csv', 'r')
     value = 0
     found = 0
     while(1):
         line = configFile.readline()
-        if(line == '')
+        if line == '':
             break
         arr = line.strip().split(',')
         if arr[0] == param:
@@ -19,4 +19,4 @@ def read_config(param):
         print('No param called:{} found'.format(param))
     else:
         print('Param:{} found'.format(param))        
-    return value
+    return int(value)
