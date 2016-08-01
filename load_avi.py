@@ -30,6 +30,57 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
 
     return videoNP
 
+def detectFace(frame):
+    #debugMode = read_config('debugMode')
+    cascPath = '../input/cascades/haarcascades/haarcascade_frontalface_alt2.xml'
+    faceCascade = cv2.CascadeClassifier(cascPath)
+    faces = faceCascade.detectMultiScale(
+        frame,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30)
+    )
+    if len(faces) == 1:
+        face = faces[0]
+        x = face[0]
+        y = face[1]
+        w = face[2]
+        h = face[3]
+        detectedFace = frame[y:y+h, x:x+w]
+        #if debugMode:
+        #    cv2.imshow('Face Detected', detectedFace)
+        #    cv2.waitKey(0)
+        #    cv2.destroyAllWindows()
+        return detectedFace
+    else:
+        return frame
+
+def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame):
+    video = cv2.VideoCapture(fileName)
+    numFrames = 0
+    debugMode = read_config('debugMode')
+
+    videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
+    while (video.isOpened()):
+        if startFrame <= numFrames and endFrame >= numFrames:
+            ret, frame = video.read()
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            frame = detectFace(frame)
+            resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
+            resized = resized.reshape(1, frameHeight, frameWidth)
+            # if debugMode:
+            #    print('resized shape:{}'.format(resized.shape))
+            videoNP = np.append(videoNP, [resized], axis=0)
+            # if debugMode:
+            #    print('videoNP shape:{}'.format(videoNP.shape))
+        if endFrame < numFrames:
+            break
+        numFrames += 1
+
+    print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
+
+    return videoNP
+
 def load_frame(fileName, frameHeight, frameWidth, frameNumber):
     video = cv2.VideoCapture(fileName)
     numFrames = 0

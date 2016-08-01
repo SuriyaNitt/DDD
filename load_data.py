@@ -128,6 +128,7 @@ def read_train_data(frameHeight, frameWidth, batchList):
     uniqueVideosList = []
     instanceCount = 0
     debugMode = read_config('debugMode')
+    inputImageType = read_config('inputImageType')
     
     if debugMode:
         print'\n'
@@ -160,7 +161,10 @@ def read_train_data(frameHeight, frameWidth, batchList):
         
         fileName = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
                                 str(glassInfo), str(videoName) + '.avi')
-        videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, int(startFrame), int(endFrame))
+        if inputImageType == 0:
+            videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, int(startFrame), int(endFrame))
+        else:
+            videoNP = load_avi.load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, int(startFrame), int(endFrame))
         trainingData = np.append(trainingData, videoNP, axis=0)
         
     startFrame = batchList[uniqueVideosList[-1]].split('_')[3]
@@ -183,7 +187,10 @@ def read_train_data(frameHeight, frameWidth, batchList):
         print('EndFrame value:{}'.format(endFrame))
         print('batchList:{}'.format(batchList[1148]))
 
-    videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, int(startFrame), int(endFrame))
+    if inputImageType == 0:
+        videoNP = load_avi.load_avi_into_nparray(fileName, frameHeight, frameWidth, int(startFrame), int(endFrame))
+    else:
+        videoNP = load_avi.load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, int(startFrame), int(endFrame))
     trainingData = np.append(trainingData, videoNP, axis=0)
         
     return trainingData    
