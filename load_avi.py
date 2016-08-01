@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
 from read_config import read_config
+from tqdm import tqdm
+import accv_utils
+import os
+
 '''
     Function to load avi file from disc in required frame resolution
 '''
@@ -56,29 +60,42 @@ def detectFace(frame):
         return frame
 
 def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame):
+    arr = fileName.split('/')
+    cacheName = arr[3] + '_' + arr[4] + '_' + arr[5].split('.')[0] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
+    cachePath = '../cache/' + cacheName
+
     video = cv2.VideoCapture(fileName)
     numFrames = 0
     debugMode = read_config('debugMode')
 
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
-    while (video.isOpened()):
-        if startFrame <= numFrames and endFrame >= numFrames:
-            ret, frame = video.read()
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            frame = detectFace(frame)
-            resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
-            resized = resized.reshape(1, frameHeight, frameWidth)
-            # if debugMode:
-            #    print('resized shape:{}'.format(resized.shape))
-            videoNP = np.append(videoNP, [resized], axis=0)
-            # if debugMode:
-            #    print('videoNP shape:{}'.format(videoNP.shape))
-        if endFrame < numFrames:
-            break
-        numFrames += 1
+
+    if os.path.isdir(cacheName):
+        print('Restoring from cache')
+        videoNP = accv_utils.restore_data(cachePath)
+    else:
+	pbar = tqdm(total=(endFrame-startFrame+1))
+        while (video.isOpened()):
+            if startFrame <= numFrames and endFrame >= numFrames:
+                ret, frame = video.read()
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                frame = detectFace(frame)
+                resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
+                resized = resized.reshape(1, frameHeight, frameWidth)
+                # if debugMode:
+                #    print('resized shape:{}'.format(resized.shape))
+                videoNP = np.append(videoNP, [resized], axis=0)
+                # if debugMode:
+                #    print('videoNP shape:{}'.format(videoNP.shape))
+                pbar.update(1)
+            if endFrame < numFrames:
+                break
+            numFrames += 1
+        pbar.close()
+        print('Creating cache')
+        accv_utils.cache_data(videoNP, cachePath)  
 
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
-
     return videoNP
 
 def load_frame(fileName, frameHeight, frameWidth, frameNumber):

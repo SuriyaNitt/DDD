@@ -10,7 +10,11 @@ def cache_data(data, path):
         hickle.dump(data, file)
         file.close()
     else:
-        print('Directory doesn\'t exists')        
+        print('Directory doesn\'t exists; Creating..')
+        os.mkdir(os.path.dirname(path), 0755)
+        file = open(path, 'w')
+        hickle.dump(data, file)
+        file.close()         
         
 def restore_data(path):
     data = dict()
