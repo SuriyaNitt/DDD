@@ -233,6 +233,13 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
                 validationScore = cross_validate(cnnModel, crossValidTarget, crossValidId)
 
                 if validationScore < minScore:
+		    historyFile = open(historyFileName, 'a')
+                    historyFile.write('{}, {}'.format(foldNum, minScore))
+                    historyFile.close()
+                    fileName = '../pretrained/weight' + str(num_fold) + '.h5'
+                    if not os.path.isdir(os.path.dirname(fileName)):
+                        os.mkdir(os.path.dirname(fileName))
+                    model.save_weights(filepath=fileName, overwrite=True)
                     minScore = validationScore
                 
                 if validationScore > prevScore:
