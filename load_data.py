@@ -44,6 +44,7 @@ def read_train_targets():
     trainId = np.empty((0), dtype='str')
     trainTarget = np.empty((0), dtype='int8')
     uniqueDrivers = np.empty((0), dtype='str')
+    numVideos = 0
     # Check the existence of data directory
     if not os.path.isdir('../input/Training_Dataset'):
         print('Training Dataset is not found in path\n \
@@ -62,11 +63,13 @@ def read_train_targets():
                 videos = glob.glob(os.path.join(path, driverFolder, glassFolder, '*.avi'))
                 for video in videos:
                     fileBase = os.path.basename(video)
+                    #if debugMode:
+                    #    print('Reading Video details:{}/{}/{}/{}'.format(path, driverFolder, glassFolder, fileBase))
                     driverIdLocal, trainIdLocal, trainTargetLocal = populate_train_info(path, driverFolder, \
                                                                                         glassFolder, fileBase)
-                driverId = np.append(driverId, driverIdLocal, axis=0)
-                trainId = np.append(trainId, trainIdLocal, axis=0)
-                trainTarget = np.append(trainTarget, trainTargetLocal, axis=0)
+                    driverId = np.append(driverId, driverIdLocal, axis=0)
+                    trainId = np.append(trainId, trainIdLocal, axis=0)
+                    trainTarget = np.append(trainTarget, trainTargetLocal, axis=0)
             uniqueDrivers = np.append(uniqueDrivers, [str(driverFolder)], axis=0)
 
     return driverId, trainId, trainTarget, uniqueDrivers
