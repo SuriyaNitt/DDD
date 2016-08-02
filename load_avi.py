@@ -16,8 +16,8 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
     
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
     while(video.isOpened()):
-        if startFrame <= numFrames and endFrame >= numFrames:
-            ret, frame = video.read()
+        ret, frame = video.read()
+        if startFrame <= numFrames and endFrame >= numFrames:    
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
             resized = resized.reshape(1, frameHeight, frameWidth)
@@ -76,8 +76,8 @@ def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFram
     else:
 	pbar = tqdm(total=(endFrame-startFrame+1))
         while (video.isOpened()):
+            ret, frame = video.read()
             if startFrame <= numFrames and endFrame >= numFrames:
-                ret, frame = video.read()
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 frame = detectFace(frame)
                 resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
