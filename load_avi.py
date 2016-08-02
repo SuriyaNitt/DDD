@@ -55,9 +55,9 @@ def detectFace(frame):
         #    cv2.imshow('Face Detected', detectedFace)
         #    cv2.waitKey(0)
         #    cv2.destroyAllWindows()
-        return detectedFace
+        return detectedFace, 1
     else:
-        return frame
+        return frame, len(faces)
 
 def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame):
     arr = fileName.split('/')
@@ -79,7 +79,7 @@ def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFram
             ret, frame = video.read()
             if startFrame <= numFrames and endFrame >= numFrames:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                frame = detectFace(frame)
+                frame, numFaces = detectFace(frame)
                 resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
                 resized = resized.reshape(1, frameHeight, frameWidth)
                 # if debugMode:

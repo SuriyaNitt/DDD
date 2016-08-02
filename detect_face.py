@@ -15,26 +15,31 @@ def detect_save_face(path, driverFolder, glassFolder, fileBase):
     debugMode = read_config('debugMode')
     frameWidth = read_config('frameWidth')
     frameHeight = read_config('frameHeight')
+    detectionListFilePath = os.path.join(destDir, 'detectionList.txt')
+    detectionListFile = open(detectionListFilePath, 'w')
 
     while (video.isOpened()):
         ret, frame = video.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = load_avi.detectFace(frame)
+        frame, numFaces = load_avi.detectFace(frame)
         resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
         resized = resized.reshape(1, frameHeight, frameWidth)
         # if debugMode:
         #    print('resized shape:{}'.format(resized.shape))
         destName = os.path.join(destDir, str(numFrames) + '.png')
+        detectionListFile.write(str(numFaces))
+        detectionListFile.write('\n')
         cv2.imwrite(destName, frame)
         # if debugMode:
         #    print('videoNP shape:{}'.format(videoNP.shape))
         numFrames += 1
 
+    detectionListFile.close()
     print('Num frames processed:{}'.format(numFrames))
 
 def save_faces():
-    driverFolderStart = 0#read_config('driverFolderStart')
-    driverFolderEnd = 2#read_config('driverFolderEnd')
+    driverFolderStart = 8#read_config('driverFolderStart')
+    driverFolderEnd = 10#read_config('driverFolderEnd')
     if not os.path.isdir('../input/Training_Dataset'):
         print('Training Dataset is not found in path\n \
                Make sure that it is found in ../input/Training_Dataset folder\n')
