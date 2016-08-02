@@ -8,3 +8,5 @@ miniBatchSize,16
 miniNumEpochs,1
 verbose,1
 inputImageType,1
+driverFolderStart,0
+driverFolderEnd,5
