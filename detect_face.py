@@ -39,6 +39,8 @@ def detect_save_face(path, driverFolder, glassFolder, fileBase):
             cv2.imwrite(destName, frame)
             # if debugMode:
             #    print('videoNP shape:{}'.format(videoNP.shape))
+        else:
+            break
         bar.update(1)
         numFrames += 1
     
