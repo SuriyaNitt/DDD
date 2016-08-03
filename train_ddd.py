@@ -113,7 +113,7 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     model.add(Dense(2, W_regularizer=l2(1e-0)))
     model.add(Activation('softmax'))
 
-    model.compile(Adam(lr=1e-3), loss='categorical_crossentropy')
+    model.compile(Adam(lr=1e-3), loss='categorical_crossentropy', metrics=["accuracy"])
     
     plot(model, to_file='model.png')
     
@@ -153,10 +153,11 @@ def train(model, crossTrainTarget, crossTrainId):
         # zero mean
         mean = np.mean(xTrain, axis=0)
         xTrain = xTrain - mean
-        xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
-        # zero mean
-        mean = np.mean(xFace, axis=0)
-        xFace = xFace - mean
+        if modelNo == 1:
+            xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+            # zero mean
+            mean = np.mean(xFace, axis=0)
+            xFace = xFace - mean
         if modelNo == 0:
             xTrainFull = xTrain
         elif modelNo == 1:
@@ -203,10 +204,11 @@ def cross_validate(model, crossValidTarget, crossValidId):
         # zero mean
         mean = np.mean(xValid, axis=0)
         xValid = xValid - mean
-        xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
-        # zero mean
-        mean = np.mean(xFace, axis=0)
-        xFace = xFace - mean
+        if modelNo == 1:
+            xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+            # zero mean
+            mean = np.mean(xFace, axis=0)
+            xFace = xFace - mean
         if modelNo == 0:
             xValidFull = xValid
         elif modelNo == 1:
@@ -250,10 +252,11 @@ def validate(model, validationTarget, validationId):
         # zero mean
         mean = np.mean(xValid, axis=0)
         xValid = xValid - mean
-        xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
-        # zero mean
-        mean = np.mean(xFace, axis=0)
-        xFace = xFace - mean
+        if modelNo == 1:
+            xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
+            # zero mean
+            mean = np.mean(xFace, axis=0)
+            xFace = xFace - mean
         if modelNo == 0:
             xValidFull = xValid
         elif modelNo == 1:
