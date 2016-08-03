@@ -49,9 +49,7 @@ def detect_save_face(path, driverFolder, glassFolder, fileBase):
     detectionListFile.close()
     print('Num frames processed:{}'.format(numFrames))
 
-def save_faces(driverFolderStart, driverFolderEnd):
-    #driverFolderStart = 10#read_config('driverFolderStart')
-    #driverFolderEnd = 12#read_config('driverFolderEnd')
+def save_faces_train(driverFolderStart, driverFolderEnd):
     debugMode = read_config('debugMode')
     if not os.path.isdir('../input/Training_Dataset'):
         print('Training Dataset is not found in path\n \
@@ -75,8 +73,28 @@ def save_faces(driverFolderStart, driverFolderEnd):
                         print('Reading Video details:{}/{}/{}/{}'.format(path, driverFolder, glassFolder, fileBase))
                     detect_save_face(path, driverFolder, glassFolder, fileBase)
 
+def save_faces_valid(driverFolderStart, driverFolderEnd):
+    debugMode = read_config('debugMode')
+    if not os.path.isdir('../input/Evaluation_Dataset'):
+        print('Evaluation Dataset is not found in path\n \
+               Make sure that it is found in ../input/Evaluation_Dataset folder\n')
+    else:
+        print('Evaluation Dataset found!\n')
+        path = '../input/Evaluation_Dataset'
+        driverFolders = os.listdir(path)
+        driverFolders = sorted(driverFolders, key=load_data.natural_keys)
+        driverFolders = driverFolders[driverFolderStart:driverFolderEnd]
+        for driverFolder in driverFolders:
+            videos = glob.glob(os.path.join(path, driverFolder, '*.mp4'))
+            for video in videos:
+                fileBase = os.path.basename(video)
+                if debugMode:
+                    print('Reading Video details:{}/{}/{}'.format(path, driverFolder, fileBase))
+                detect_save_face(path, driverFolder, '', fileBase)
+
 
 if __name__ == '__main__':
     start = int(sys.argv[1])
     end = int(sys.argv[2])
-    save_faces(start, end)
+    #save_faces_train(start, end)
+    save_faces_valid(start, end)
