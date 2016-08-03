@@ -10,3 +10,6 @@ verbose,1
 inputImageType,1
 driverFolderStart,0
 driverFolderEnd,5
+modelNo,1
+frameHeightFace,64
+frameWidthFace,64

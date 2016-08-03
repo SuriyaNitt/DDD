@@ -74,7 +74,7 @@ def two_input_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     # Convolutional stack for full frame
     model1 = Sequential()
     model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
-                            input_shape=(1, int(frameHeight), int(frameWidth))))
+                            input_shape=(1, int(frameHeight1), int(frameWidth1))))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
     model1.add(Dropout(0.1))
 
@@ -89,7 +89,7 @@ def two_input_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     # Convolutional stack for face ROI
     model2 = Sequential()
     model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
-                            input_shape=(1, int(frameHeight), int(frameWidth))))
+                            input_shape=(1, int(frameHeight2), int(frameWidth2))))
     model2.add(MaxPooling2D(pool_size=(2, 2)))
     model2.add(Dropout(0.1))
 
@@ -119,16 +119,20 @@ def two_input_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     
 def train(model, crossTrainTarget, crossTrainId):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
+    frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
     batchSize = read_config('batchSize')
     miniBatchSize = read_config('miniBatchSize')
     miniNumEpochs = read_config('miniNumEpochs')
     verbose = read_config('verbose')
     debugMode = read_config('debugMode')
+    modelNo = read_config('modelNo')
     
     numBatches = math.ceil(len(crossTrainTarget)/batchSize)
     batchCount = 0
     itemsDone = 0
     xTrain, yTrain = [], []
+    xFace = []
+    xTrainFull = []
     batchList = []
             
     while itemsDone < len(crossTrainTarget):
@@ -142,9 +146,14 @@ def train(model, crossTrainTarget, crossTrainId):
             yTrain = crossTrainTarget[itemsDone:itemsDone+batchSize]
             itemsDone += batchSize
 
-        yTrain = np_utils.to_categorical(yTrain, 2)
-                
-        xTrain = load_data.read_train_data(frameHeight, frameWidth, batchList)
+        yTrain = np_utils.to_categorical(yTrain, 2)          
+        xTrain = load_data.read_train_data_avi(frameHeight, frameWidth, batchList)
+        xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+        if modelNo == 0:
+            xTrainFull = xTrain
+        elif modelNo == 1:
+            xTrainFull = [xTrain, xFace]
+
         print('Loaded data')
         if debugMode:
             print('xTrain shape:{}'.format(xTrain.shape))
@@ -157,13 +166,17 @@ def train(model, crossTrainTarget, crossTrainId):
         
 def cross_validate(model, crossValidTarget, crossValidId):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
+    frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
     batchSize = read_config('batchSize')
     miniBatchSize = read_config('miniBatchSize')
     verbose = read_config('verbose')
+    modelNo = read_config('modelNo')
     
     numBatches = math.ceil(len(crossValidTarget)/batchSize)
     itemsDone = 0
     xValid, yValid = [], []
+    xFace = []
+    xValidFull = []
     batchList = []
     validationScore = 0
     
@@ -177,9 +190,14 @@ def cross_validate(model, crossValidTarget, crossValidId):
             yValid = crossValidTarget[itemsDone:itemsDone+batchSize]
             itemsDone += batchSize
 
-        yValid = np_utils.to_categorical(yValid, 2)
-            
-        xValid = load_data.read_train_data(frameHeight, frameWidth, batchList)
+        yValid = np_utils.to_categorical(yValid, 2)       
+        xValid = load_data.read_train_data_avi(frameHeight, frameWidth, batchList)
+        xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+        if modelNo == 0:
+            xValidFull = xValid
+        elif modelNo == 1:
+            xValidFull = [xValid, xFace]
+
         predictions = model.predict(xValid, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
         
@@ -189,13 +207,17 @@ def cross_validate(model, crossValidTarget, crossValidId):
     
 def validate(model, validationTarget, validationId):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
+    frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
     batchSize = read_config('batchSize')
     miniBatchSize = read_config('miniBatchSize')
     verbose = read_config('verbose')
+    modelNo = read_config('modelNo')
     
     numBatches = math.ceil(len(validationTarget)/batchSize)
     itemsDone = 0
     xValid, yValid = [], []
+    xFace = []
+    xValidFull = []
     batchList = []
     validationScore = 0
     
@@ -209,9 +231,13 @@ def validate(model, validationTarget, validationId):
             yValid = validationTarget[itemsDone:itemsDone+batchSize]
             itemsDone += batchSize
 
-        yValid = np_utils.to_categorical(yValid, 2)
-            
-        xValid = load_data.read_validation_data(frameHeight, frameWidth, batchList)
+        yValid = np_utils.to_categorical(yValid, 2)       
+        xValid = load_data.read_validation_data_avi(frameHeight, frameWidth, batchList)
+        xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
+        if modelNo == 0:
+            xValidFull = xValid
+        elif modelNo == 1:
+            xValidFull = [xValid, xFace]
         predictions = model.predict(xValid, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
         
@@ -228,11 +254,13 @@ def validate(model, validationTarget, validationId):
 '''
 def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
+    frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
     randomState = 51
     foldNum = 0
     patienceFactor = read_config('patienceFactor')
     numEpochs = read_config('numEpochs')
     debugMode = read_config('debugMode')
+    modelNo = read_config('modelNo')
     
     driverId, trainId, trainTarget, uniqueDrivers = load_data.read_train_targets()
     validationId, validationTarget = load_data.read_validation_targets()
@@ -257,8 +285,11 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
     
     if trainVar:
         for train_drivers, test_drivers in kf:
-            cnnModel = CNN_model(frameHeight, frameWidth)
-            
+            if modelNo == 0:
+                cnnModel = CNN_model(frameHeight, frameWidth)
+            elif modelNo == 1:
+                cnnModel = two_inputs_cnn_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
+ 
             uniqueListTrain = [uniqueDrivers[i] for i in train_drivers]
             crossTrainTarget, crossTrainId, crossTrainDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListTrain)
             uniqueListValid = [uniqueDrivers[i] for i in test_drivers]
