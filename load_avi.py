@@ -98,6 +98,33 @@ def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFram
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
     return videoNP
 
+def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFrame):
+    debugMode = read_config('debugMode')
+
+    if not os.path.isdir(filePath):
+        print('FilePath:{} does not exist'.format(filePath))
+        return
+
+    videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
+    for i in range(startFrame, endFrame + 1):
+        fileName = os.path.join(filePath, str(i) + '.png')
+        frame = cv2.imread(fileName)
+        # detected region is too big or small to be a face
+        if frame.shape[0] > 420 and frame.shape[1] > 420 and frame.shape[0] < 150 and frame.shape[1] < 150: 
+            frame = np.zeros((250, 250), dtype='float32')
+
+        resized = cv2.resize(frame, (frameWidth, frameHeight), cv2.INTER_LINEAR)
+        resized = resized.reshape(1, frameHeight, frameWidth)
+        #if debugMode:
+        #    print('resized shape:{}'.format(resized.shape))
+        videoNP = np.append(videoNP, [resized], axis=0)
+        #if debugMode:
+        #    print('videoNP shape:{}'.format(videoNP.shape))
+ 
+    print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
+
+    return videoNP
+
 def load_frame(fileName, frameHeight, frameWidth, frameNumber):
     video = cv2.VideoCapture(fileName)
     numFrames = 0

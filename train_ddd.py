@@ -232,7 +232,7 @@ def validate(model, validationTarget, validationId):
             itemsDone += batchSize
 
         yValid = np_utils.to_categorical(yValid, 2)       
-        xValid = load_data.read_validation_data_avi(frameHeight, frameWidth, batchList)
+        xValid = load_data.read_validation_data_mp4(frameHeight, frameWidth, batchList)
         xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
         if modelNo == 0:
             xValidFull = xValid
