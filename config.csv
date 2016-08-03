@@ -7,7 +7,7 @@ batchSize,1600
 miniBatchSize,16
 miniNumEpochs,1
 verbose,1
-inputImageType,1
+inputImageType,0
 driverFolderStart,0
 driverFolderEnd,5
 modelNo,1

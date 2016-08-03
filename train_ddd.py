@@ -69,7 +69,7 @@ def CNN_model(frameHeight, frameWidth):
     
     return model
 
-def two_input_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
+def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
 
     # Convolutional stack for full frame
     model1 = Sequential()
@@ -103,7 +103,9 @@ def two_input_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
 
     # FC stack with merged convolutional stacks
     model = Sequential()
-    mode1.add(Merge([model1, model2], mode='cos'))
+    model.add(Merge([model1, model2], mode='concat', concat_axis=-1))
+
+    model.add(Flatten())
 
     model.add(Dense(32, W_regularizer=l2(1e-4)))
     model.add(Activation('relu'))     
@@ -162,9 +164,9 @@ def train(model, crossTrainTarget, crossTrainId):
 
         print('Loaded data')
         if debugMode:
-            print('xTrain shape:{}'.format(xTrain.shape))
+            print('xTrain shape:{}'.format(xTrainFull[0].shape + xTrainFull[1].shape))
             print('yTrain shape:{}'.format(yTrain.shape))
-        model.fit(xTrain, yTrain, miniBatchSize, miniNumEpochs, verbose)
+        model.fit(xTrainFull, yTrain, miniBatchSize, miniNumEpochs, verbose)
         batchCount += 1
 
     print('Training Epoch done')
@@ -210,7 +212,7 @@ def cross_validate(model, crossValidTarget, crossValidId):
         elif modelNo == 1:
             xValidFull = [xValid, xFace]
 
-        predictions = model.predict(xValid, miniBatchSize, verbose)
+        predictions = model.predict(xValidFull, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
         
     validationScore /= numBatches
@@ -256,7 +258,8 @@ def validate(model, validationTarget, validationId):
             xValidFull = xValid
         elif modelNo == 1:
             xValidFull = [xValid, xFace]
-        predictions = model.predict(xValid, miniBatchSize, verbose)
+
+        predictions = model.predict(xValidFull, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
         
     validationScore /= numBatches
@@ -333,7 +336,7 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
 		    historyFile = open(historyFileName, 'a')
                     historyFile.write('{}, {}'.format(foldNum, minScore))
                     historyFile.close()
-                    fileName = '../pretrained/weight' + str(num_fold) + '.h5'
+                    fileName = '../weights/weight' + str(num_fold) + '.h5'
                     if not os.path.isdir(os.path.dirname(fileName)):
                         os.mkdir(os.path.dirname(fileName))
                     model.save_weights(filepath=fileName, overwrite=True)

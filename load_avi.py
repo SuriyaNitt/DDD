@@ -13,7 +13,8 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
     video = cv2.VideoCapture(fileName)
     numFrames = 0
     debugMode = read_config('debugMode')
-    
+    pbar = tqdm(total=(endFrame-startFrame+1))
+
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
     while(video.isOpened()):
         ret, frame = video.read()
@@ -26,10 +27,12 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
             videoNP = np.append(videoNP, [resized], axis=0)
             #if debugMode:
             #    print('videoNP shape:{}'.format(videoNP.shape))
+            pbar.update(1)
         if endFrame < numFrames:
             break
         numFrames += 1
 
+    pbar.close()
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
 
     return videoNP
@@ -105,10 +108,13 @@ def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFra
         print('FilePath:{} does not exist'.format(filePath))
         return
 
+    pbar = tqdm(total=(endFrame-startFrame+1))
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
     for i in range(startFrame, endFrame + 1):
         fileName = os.path.join(filePath, str(i) + '.png')
         frame = cv2.imread(fileName)
+        if len(frame.shape) == 3:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # detected region is too big or small to be a face
         if frame.shape[0] > 420 and frame.shape[1] > 420 and frame.shape[0] < 150 and frame.shape[1] < 150: 
             frame = np.zeros((250, 250), dtype='float32')
@@ -120,7 +126,9 @@ def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFra
         videoNP = np.append(videoNP, [resized], axis=0)
         #if debugMode:
         #    print('videoNP shape:{}'.format(videoNP.shape))
- 
+        pbar.update(1)
+
+    pbar.close()
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
 
     return videoNP
