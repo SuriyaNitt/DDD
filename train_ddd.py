@@ -148,7 +148,13 @@ def train(model, crossTrainTarget, crossTrainId):
 
         yTrain = np_utils.to_categorical(yTrain, 2)          
         xTrain = load_data.read_train_data_avi(frameHeight, frameWidth, batchList)
+        # zero mean
+        mean = np.mean(xTrain, axis=0)
+        xTrain = xTrain - mean
         xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+        # zero mean
+        mean = np.mean(xFace, axis=0)
+        xFace = xFace - mean
         if modelNo == 0:
             xTrainFull = xTrain
         elif modelNo == 1:
@@ -192,7 +198,13 @@ def cross_validate(model, crossValidTarget, crossValidId):
 
         yValid = np_utils.to_categorical(yValid, 2)       
         xValid = load_data.read_train_data_avi(frameHeight, frameWidth, batchList)
+        # zero mean
+        mean = np.mean(xValid, axis=0)
+        xValid = xValid - mean
         xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+        # zero mean
+        mean = np.mean(xFace, axis=0)
+        xFace = xFace - mean
         if modelNo == 0:
             xValidFull = xValid
         elif modelNo == 1:
@@ -231,9 +243,15 @@ def validate(model, validationTarget, validationId):
             yValid = validationTarget[itemsDone:itemsDone+batchSize]
             itemsDone += batchSize
 
-        yValid = np_utils.to_categorical(yValid, 2)       
+        yValid = np_utils.to_categorical(yValid, 2)
         xValid = load_data.read_validation_data_mp4(frameHeight, frameWidth, batchList)
+        # zero mean
+        mean = np.mean(xValid, axis=0)
+        xValid = xValid - mean
         xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
+        # zero mean
+        mean = np.mean(xFace, axis=0)
+        xFace = xFace - mean
         if modelNo == 0:
             xValidFull = xValid
         elif modelNo == 1:
