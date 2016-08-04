@@ -28,7 +28,7 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
 
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
 
-    if os.path.isdir(cacheName):
+    if os.path.isfile(cachePath):
         print('Restoring from cache')
         videoNP = accv_utils.restore_data(cachePath)
     else:
@@ -44,9 +44,9 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
                 #if debugMode:
                 #    print('videoNP shape:{}'.format(videoNP.shape))
                 pbar.update(1)
-             if endFrame < numFrames:
+            if endFrame < numFrames:
                 break
-             numFrames += 1
+            numFrames += 1
         accv_utils.cache_data(videoNP, cachePath)
 
     pbar.close()
@@ -95,7 +95,7 @@ def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFram
 
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
 
-    if os.path.isdir(cacheName):
+    if os.path.isfile(cachePath):
         print('Restoring from cache')
         videoNP = accv_utils.restore_data(cachePath)
     else:
@@ -130,20 +130,20 @@ def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFra
         print('FilePath:{} does not exist'.format(filePath))
         return
 
-    arr = fileName.split('/')
+    arr = filePath.split('/')
     arrLen = len(arr)
     cacheName = ''
     cachePath = ''
     if arrLen == 5:
-        cacheName = 'face_' + arr[3] + '_' + arr[4].split('.')[0] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
+        cacheName = 'face_' + arr[3] + '_' + arr[4] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
         cachePath = '../cache/' + cacheName
     elif arrLen == 6:
-        cacheName = 'face_' + arr[3] + '_' + arr[4] + '_' + arr[5].split('.')[0] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
+        cacheName = 'face_' + arr[3] + '_' + arr[4] + '_' + arr[5] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
         cachePath = '../cache/' + cacheName
 
     pbar = tqdm(total=(endFrame-startFrame+1))
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
-    if os.path.isdir(cacheName):
+    if os.path.isfile(cachePath):
         print('Restoring from cache')
         videoNP = accv_utils.restore_data(cachePath)
     else:
@@ -164,7 +164,7 @@ def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFra
             #if debugMode:
             #    print('videoNP shape:{}'.format(videoNP.shape))
             pbar.update(1)
-            accv_utils.cache_data(cachePath, videoNP)
+            accv_utils.cache_data(videoNP, cachePath)
     pbar.close()
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
 

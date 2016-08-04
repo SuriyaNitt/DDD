@@ -176,9 +176,7 @@ def read_train_data_avi(frameHeight, frameWidth, batchList):
     
     fileName = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
                                 str(glassInfo), str(videoName) + '.avi')
-                                
-    if debugMode:
-        print 'Loading input data from avi file'
+
     try:
         startFrame = int(startFrame)
         endFrame = int(endFrame)
@@ -248,9 +246,7 @@ def read_train_data_img(frameHeight, frameWidth, batchList):
     
     filePath = os.path.join('..', 'input', 'Training_Dataset', str(driverId), \
                                 str(glassInfo), str(videoName))
-                                
-    if debugMode:
-        print 'Loading input data from avi file'
+
     try:
         startFrame = int(startFrame)
         endFrame = int(endFrame)

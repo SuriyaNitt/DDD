@@ -28,17 +28,10 @@ class TrainingHistory(Callback):
     def on_train_begin(self, logs={}):
         self.losses = []
         self.accuracy = []
-        self.predictions = []
-        self.i = 0
-        self.save_every = 50
 
     def on_batch_end(self, batch, logs={}):
         self.losses.append(logs.get('loss'))
         self.accuracy.append(logs.get('accuracy'))
-        self.i += 1        
-        if self.i % self.save_every == 0:        
-            pred = model.predict(X_train)
-            self.predictions.append(pred)
 
 np.random.seed(2016)
 
@@ -92,14 +85,22 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     model1 = Sequential()
     model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
                             input_shape=(1, int(frameHeight1), int(frameWidth1))))
+    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
     model1.add(Dropout(0.1))
 
+    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
     model1.add(Dropout(0.2))
 
     model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.2))
+
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(MaxPooling2D(pool_size=(8, 8)))
     model1.add(Dropout(0.2))
 
@@ -107,14 +108,22 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     model2 = Sequential()
     model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
                             input_shape=(1, int(frameHeight2), int(frameWidth2))))
+    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model2.add(MaxPooling2D(pool_size=(2, 2)))
     model2.add(Dropout(0.1))
 
+    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model2.add(MaxPooling2D(pool_size=(2, 2)))
     model2.add(Dropout(0.2))
 
     model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.2))
+
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model2.add(MaxPooling2D(pool_size=(8, 8)))
     model2.add(Dropout(0.2))
 
@@ -124,8 +133,14 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
 
     model.add(Flatten())
 
+    model.add(Dense(4096, W_regularizer=l2(1e-6)))
+    model.add(Activation('relu'))
+
+    model.add(Dense(1024, W_regularizer=l2(1e-5)))
+    model.add(Activation('relu'))
+
     model.add(Dense(32, W_regularizer=l2(1e-4)))
-    model.add(Activation('relu'))     
+    model.add(Activation('relu'))
 
     model.add(Dense(2, W_regularizer=l2(1e-0)))
     model.add(Activation('softmax'))
