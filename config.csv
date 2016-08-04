@@ -3,7 +3,7 @@ frameWidth,128
 debugMode,1
 numEpochs,4
 patienceFactor,1
-batchSize,1600
+batchSize,500
 miniBatchSize,16
 miniNumEpochs,1
 verbose,1

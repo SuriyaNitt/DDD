@@ -1,4 +1,3 @@
-
 import numpy as np
 import os
 import warnings
@@ -14,6 +13,8 @@ from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils.visualize_util import plot
 from keras.utils import np_utils
+from keras.callbacks import Callback
+import matplotlib.pyplot as plt
 
 #from multiprocessing import Pool, Array
 #import threading
@@ -22,6 +23,22 @@ from keras.utils import np_utils
 import math
 import load_data
 from read_config import read_config
+
+class TrainingHistory(Callback):
+    def on_train_begin(self, logs={}):
+        self.losses = []
+        self.accuracy = []
+        self.predictions = []
+        self.i = 0
+        self.save_every = 50
+
+    def on_batch_end(self, batch, logs={}):
+        self.losses.append(logs.get('loss'))
+        self.accuracy.append(logs.get('accuracy'))
+        self.i += 1        
+        if self.i % self.save_every == 0:        
+            pred = model.predict(X_train)
+            self.predictions.append(pred)
 
 np.random.seed(2016)
 
@@ -136,6 +153,17 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
     xFace = []
     xTrainFull = []
     batchList = []
+    history = TrainingHistory()
+
+    #plotting
+    #plt.figure(figsize=(6, 3))
+    plt.axis([0, numBatches, 0, 30])
+    plt.ylabel('error')
+    plt.xlabel('iteration')
+    plt.title('training error')
+    plt.ion()
+    xPlot = []
+    yPlot = []
             
     while itemsDone < len(crossTrainTarget):
         print('\nTraining Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
@@ -167,11 +195,19 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
         if debugMode:
             print('xTrain shape:{}'.format(xTrainFull[0].shape + xTrainFull[1].shape))
             print('yTrain shape:{}'.format(yTrain.shape))
-        model.fit(xTrainFull, yTrain, miniBatchSize, miniNumEpochs, verbose)
+
+        model.fit(xTrainFull, yTrain, miniBatchSize, miniNumEpochs, verbose, callbacks=[history])
+        # plotting
+        loss = np.array(history.losses)
+        xPlot.append(batchCount)
+        yPlot.append(np.mean(loss))
+        plt.plot(xPlot, yPlot)
+        plt.pause(0.05)
+        
         batchCount += 1
 
     print('Training Epoch done')
-    return model
+    return model, history
         
 def cross_validate(model, crossValidTarget, crossValidId, epoch):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
@@ -335,7 +371,14 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
             for epoch in range(int(numEpochs)):
                 print ('Epoch {} of {}'.format(epoch+1, numEpochs))
             
-                cnnModel = train(cnnModel, crossTrainTarget, crossTrainId, epoch)
+                cnnModel, history = train(cnnModel, crossTrainTarget, crossTrainId, epoch)
+                # plotting
+                plt.figure(figsize=(6, 3))
+                plt.plot(history.losses)
+                plt.ylabel('error')
+                plt.xlabel('iteration')
+                plt.title('training error')
+                plt.show()
                 validationScore = cross_validate(cnnModel, crossValidTarget, crossValidId, epoch)
 
                 if validationScore < minScore:
