@@ -119,7 +119,7 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     
     return model
     
-def train(model, crossTrainTarget, crossTrainId):
+def train(model, crossTrainTarget, crossTrainId, epoch):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
     frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
     batchSize = read_config('batchSize')
@@ -138,7 +138,7 @@ def train(model, crossTrainTarget, crossTrainId):
     batchList = []
             
     while itemsDone < len(crossTrainTarget):
-        print('\n Batch {} of {}'.format(batchCount+1, numBatches))
+        print('\nTraining Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
         if(len(crossTrainTarget) - itemsDone) < batchSize:
             batchList = crossTrainId[itemsDone:]
             yTrain = crossTrainTarget[itemsDone:]
@@ -173,7 +173,7 @@ def train(model, crossTrainTarget, crossTrainId):
     print('Training Epoch done')
     return model
         
-def cross_validate(model, crossValidTarget, crossValidId):
+def cross_validate(model, crossValidTarget, crossValidId, epoch):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
     frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
     batchSize = read_config('batchSize')
@@ -183,6 +183,7 @@ def cross_validate(model, crossValidTarget, crossValidId):
     
     numBatches = math.ceil(len(crossValidTarget)/batchSize)
     itemsDone = 0
+    batchCount = 0
     xValid, yValid = [], []
     xFace = []
     xValidFull = []
@@ -190,6 +191,7 @@ def cross_validate(model, crossValidTarget, crossValidId):
     validationScore = 0
     
     while itemsDone < len(crossValidTarget):
+        print('\nCross Validation Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
         if(len(crossValidTarget) - itemsDone) < batchSize:
             batchList = crossValidId[itemsDone:]
             yValid = crossValidTarget[itemsDone:]
@@ -216,6 +218,7 @@ def cross_validate(model, crossValidTarget, crossValidId):
 
         predictions = model.predict(xValidFull, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
+        batchCount += 1
         
     validationScore /= numBatches
     print('Cross Validation Score:{}'.format(validationScore))
@@ -332,8 +335,8 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
             for epoch in range(int(numEpochs)):
                 print ('Epoch {} of {}'.format(epoch+1, numEpochs))
             
-                cnnModel = train(cnnModel, crossTrainTarget, crossTrainId)
-                validationScore = cross_validate(cnnModel, crossValidTarget, crossValidId)
+                cnnModel = train(cnnModel, crossTrainTarget, crossTrainId, epoch)
+                validationScore = cross_validate(cnnModel, crossValidTarget, crossValidId, epoch)
 
                 if validationScore < minScore:
 		    historyFile = open(historyFileName, 'a')

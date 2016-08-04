@@ -204,9 +204,9 @@ def read_train_data_img(frameHeight, frameWidth, batchList):
     instanceCount = 0
     debugMode = read_config('debugMode')
     
-    if debugMode:
-        print'\n'
-        print('BatchList length:{}'.format(len(batchList)))
+    #if debugMode:
+    #    print'\n'
+    #    print('BatchList length:{}'.format(len(batchList)))
         #print('BatchList:{}'.format(batchList))
     
     for instance in batchList:
@@ -221,9 +221,9 @@ def read_train_data_img(frameHeight, frameWidth, batchList):
         instanceCount += 1
         prevId = id
         
-    if debugMode:
-        print('Finished scanning batchList')
-        print('uniqueVideosList length:{}'.format(len(uniqueVideosList)))
+    #if debugMode:
+    #    print('Finished scanning batchList')
+    #    print('uniqueVideosList length:{}'.format(len(uniqueVideosList)))
     
     for unqVidIdx1, unqVidIdx2 in zip(uniqueVideosList[:-1], uniqueVideosList[1:]):
         startFrame = batchList[unqVidIdx1].split('_')[3]

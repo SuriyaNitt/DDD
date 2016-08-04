@@ -1,5 +1,5 @@
-frameHeight,64
-frameWidth,64
+frameHeight,128
+frameWidth,128
 debugMode,1
 numEpochs,4
 patienceFactor,1
@@ -11,5 +11,5 @@ inputImageType,0
 driverFolderStart,0
 driverFolderEnd,5
 modelNo,1
-frameHeightFace,64
-frameWidthFace,64
+frameHeightFace,128
+frameWidthFace,128
