@@ -172,13 +172,14 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
 
     #plotting
     #plt.figure(figsize=(6, 3))
-    plt.axis([0, numBatches, 0, 30])
+    plt.axis([0, numBatches, 0, 20])
     plt.ylabel('error')
     plt.xlabel('iteration')
     plt.title('training error')
     plt.ion()
+    yPlotTrainLoss = []
+    yPlotTrainAccuracy = []
     xPlot = []
-    yPlot = []
             
     while itemsDone < len(crossTrainTarget):
         print('\nTraining Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
@@ -214,9 +215,12 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
         model.fit(xTrainFull, yTrain, miniBatchSize, miniNumEpochs, verbose, callbacks=[history])
         # plotting
         loss = np.array(history.losses)
+        accuracy = np.array(history.accuracy)
         xPlot.append(batchCount)
-        yPlot.append(np.mean(loss))
-        plt.plot(xPlot, yPlot)
+        yPlotTrainLoss.append(np.mean(loss))
+        yPlotTrainAccuracy.append(np.mean(accuracy))
+        plt.plot(xPlot, yPlotTrainLoss)
+        plt.plot(xPlot, yPlotTrainAccuracy)
         plt.pause(0.05)
         
         batchCount += 1
@@ -382,25 +386,37 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
             prevScore = 10000
             minScore = 10000
             patienceCount = 0
+
+            #plotting
+            #plt.figure(figsize=(6, 3))
+            plt.axis([0, numFolds, 0, 20])
+            plt.ylabel('error')
+            plt.xlabel('iteration')
+            plt.title('Training error')
+            plt.ion()
+            yPlotTrainLoss = []
+            yPlotTrainAccuracy = []
+            xPlot = []
         
             for epoch in range(int(numEpochs)):
                 print ('Epoch {} of {}'.format(epoch+1, numEpochs))
             
                 cnnModel, history = train(cnnModel, crossTrainTarget, crossTrainId, epoch)
                 # plotting
-                plt.figure(figsize=(6, 3))
-                plt.plot(history.losses)
-                plt.ylabel('error')
-                plt.xlabel('iteration')
-                plt.title('training error')
-                plt.show()
+                loss = np.array(history.losses)
+                accuracy = np.array(history.accuracy)
+                yPlotTrainLoss.append(np.mean(loss))
+                yPlotTrainAccuracy.append(np.mean(accuracy))
+                plt.plot(xPlot, yPlotTrainLoss)
+                plt.plot(xPlot, yPlotTrainAccuracy)
+                plt.pause(0.05)
                 validationScore = cross_validate(cnnModel, crossValidTarget, crossValidId, epoch)
 
                 if validationScore < minScore:
-		    historyFile = open(historyFileName, 'a')
+		            historyFile = open(historyFileName, 'a')
                     historyFile.write('{}, {}'.format(foldNum, minScore))
                     historyFile.close()
-                    fileName = '../weights/weight' + str(num_fold) + '.h5'
+                    fileName = '../weights/weight' + str(foldNum) + '.h5'
                     if not os.path.isdir(os.path.dirname(fileName)):
                         os.mkdir(os.path.dirname(fileName))
                     model.save_weights(filepath=fileName, overwrite=True)
