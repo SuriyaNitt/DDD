@@ -164,7 +164,7 @@ def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFra
             #if debugMode:
             #    print('videoNP shape:{}'.format(videoNP.shape))
             pbar.update(1)
-            accv_utils.cache_data(videoNP, cachePath)
+        accv_utils.cache_data(videoNP, cachePath)
     pbar.close()
     print('Num frames loaded:{}'.format(endFrame - startFrame + 1))
 
