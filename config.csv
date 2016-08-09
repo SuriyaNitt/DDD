@@ -5,7 +5,7 @@ numEpochs,4
 patienceFactor,1
 batchSize,500
 miniBatchSize,16
-miniNumEpochs,10
+miniNumEpochs,1
 verbose,1
 inputImageType,0
 driverFolderStart,0

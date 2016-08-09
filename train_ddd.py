@@ -7,8 +7,9 @@ warnings.filterwarnings("ignore")
 from sklearn.cross_validation import KFold
 from sklearn.metrics import log_loss
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge
+from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge, Reshape
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
+from keras.layers.recurrent import LSTM
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils.visualize_util import plot
@@ -149,6 +150,84 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     
     plot(model, to_file='model.png')
     
+    return model
+
+def two_inputs_cnn_rnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
+
+    # Convolutional stack for full frame
+    model1 = Sequential()
+    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+                            input_shape=(1, int(frameHeight1), int(frameWidth1))))
+    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.1))
+
+    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.2))
+
+    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.2))
+
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(8, 8)))
+    #model1.add(Dropout(0.2))
+
+    # Convolutional stack for face ROI
+    model2 = Sequential()
+    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+                            input_shape=(1, int(frameHeight2), int(frameWidth2))))
+    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.1))
+
+    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.2))
+
+    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.2))
+
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(8, 8)))
+    model2.add(Dropout(0.2))
+
+    # FC stack with merged convolutional stacks
+    model = Sequential()
+    model.add(Merge([model1, model2], mode='concat', concat_axis=-1))
+    model.add(Reshape((512, 4)))
+    '''
+    model.add(Flatten())
+
+    model.add(Dense(4096, W_regularizer=l2(1e-6)))
+    model.add(Activation('relu'))
+
+    model.add(Dense(1024, W_regularizer=l2(1e-5)))
+    model.add(Activation('relu'))
+
+    model.add(Dense(32, W_regularizer=l2(1e-4)))
+    model.add(Activation('relu'))
+
+    model.add(Dense(2, W_regularizer=l2(1e-0)))
+    model.add(Activation('softmax'))
+    '''
+
+    model.add(LSTM(32))
+    model.add(Dense(2))
+    model.add(Activation('softmax'))
+
+    model.compile(Adam(lr=1e-3), loss='categorical_crossentropy', metrics=["accuracy"])
+
+    plot(model, to_file='model.png')
+
     return model
     
 def train(model, crossTrainTarget, crossTrainId, epoch):
@@ -367,10 +446,13 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
     
     if trainVar:
         for train_drivers, test_drivers in kf:
+            if foldNum == 0:
+                foldNum += 1
+                continue
             if modelNo == 0:
                 cnnModel = CNN_model(frameHeight, frameWidth)
             elif modelNo == 1:
-                cnnModel = two_inputs_cnn_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
+                cnnModel = two_inputs_cnn_rnn_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
  
             uniqueListTrain = [uniqueDrivers[i] for i in train_drivers]
             crossTrainTarget, crossTrainId, crossTrainDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListTrain)
@@ -407,6 +489,7 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
                 accuracy = np.array(history.accuracy)
                 yPlotTrainLoss.append(np.mean(loss))
                 yPlotTrainAccuracy.append(0.69)
+                xPlot.append(epoch)
                 plt.plot(xPlot, yPlotTrainLoss)
                 plt.plot(xPlot, yPlotTrainAccuracy)
                 plt.pause(0.05)
