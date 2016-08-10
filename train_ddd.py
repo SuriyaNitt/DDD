@@ -528,8 +528,26 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
         
     print('Exiting main function\n')
     
-            
+def run_test():
+    frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
+    frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
+    randomState = 51
+    debugMode = read_config('debugMode')
+    modelNo = read_config('modelNo')
+
+    # Model Initialization
+    cnnModel = Sequential()
+
+    if modelNo == 0:
+        cnnModel = CNN_model(frameHeight, frameWidth)
+    elif modelNo == 1:
+        cnnModel = two_inputs_cnn_rnn_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
+
+    testVideos = load_data.test_videos()
+    for testVideo in testVideos:
+
 if __name__ == '__main__':
     run_cross_validation(8, 1, 0)
+    #run_test()
                 
             
