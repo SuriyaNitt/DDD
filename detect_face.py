@@ -92,9 +92,22 @@ def save_faces_valid(driverFolderStart, driverFolderEnd):
                     print('Reading Video details:{}/{}/{}'.format(path, driverFolder, fileBase))
                 detect_save_face(path, driverFolder, '', fileBase)
 
+def save_faces_test(start, end):
+    if not os.path.isdir('../test'):
+        print('Testset is not found in path\n \
+               Make sure that it is found in ../test folder\n')
+    else:
+        print('Testset found!\n')
+        path = '../test'
+        videos = glob.glob(ps.path.join(path, '*.mp4'))
+        videos = [start:end]
+        for video in videos:
+            fileBase = os.path.basename(video)
+            detect_save_face(path, '', '', fileBase)
 
 if __name__ == '__main__':
     start = int(sys.argv[1])
     end = int(sys.argv[2])
     #save_faces_train(start, end)
-    save_faces_valid(start, end)
+    #save_faces_valid(start, end)
+    save_faces_test(start, end)
