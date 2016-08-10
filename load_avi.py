@@ -24,6 +24,10 @@ def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFram
     elif arrLen == 6:
         cacheName = arr[3] + '_' + arr[4] + '_' + arr[5].split('.')[0] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
         cachePath = '../cache/' + cacheName
+    elif arrLen == 3:
+        cacheName = arr[2].split('.')[0] + '.dat'
+        cachePath = '../cache/' + cacheName
+
     pbar = tqdm(total=(endFrame-startFrame+1))
 
     videoNP = np.empty((0, 1, frameHeight, frameWidth), dtype='float32')
@@ -88,6 +92,9 @@ def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFram
     elif arrLen == 6:
         cacheName = arr[3] + '_' + arr[4] + '_' + arr[5].split('.')[0] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
         cachePath = '../cache/' + cacheName
+    elif arrLen == 3:
+        cacheName = arr[2].split('.')[0] + '.dat'
+        cachePath = '../cache/' + cacheName
 
     video = cv2.VideoCapture(fileName)
     numFrames = 0
@@ -139,6 +146,9 @@ def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFra
         cachePath = '../cache/' + cacheName
     elif arrLen == 6:
         cacheName = 'face_' + arr[3] + '_' + arr[4] + '_' + arr[5] + '_' + str(startFrame) + '_' + str(endFrame) + '.dat'
+        cachePath = '../cache/' + cacheName
+    elif arrLen == 3:
+        cacheName = arr[2].split('.')[0] + '.dat'
         cachePath = '../cache/' + cacheName
 
     pbar = tqdm(total=(endFrame-startFrame+1))

@@ -534,6 +534,8 @@ def run_test():
     randomState = 51
     debugMode = read_config('debugMode')
     modelNo = read_config('modelNo')
+    miniBatchSize = read_config('miniBatchSize')
+    verbose = read_config('verbose')
 
     # Model Initialization
     cnnModel = Sequential()
@@ -543,8 +545,46 @@ def run_test():
     elif modelNo == 1:
         cnnModel = two_inputs_cnn_rnn_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
 
-    testVideos = load_data.test_videos()
+    testPath = '../test'
+    testVideos = glob.glob(os.path.join(testPath, '*.mp4'))
+    xTest = []
+
+    resultsDir = '../results'
+    if not os.path.isdir(resultsDir):
+        print('Creating results dir\n')
+        os.mkdir(resultsDir)
+
+    weightsDir = '../weights'
+    if not os.path.isdir(weightsDir):
+        print('No trained weights found, exiting..')
+        return
+
+    weights = glob.glob(os.path.join(weightsDir, '*.h5'))
+
     for testVideo in testVideos:
+        fileBase = os.path.basename(testVideo)
+        videoPath = os.path.join(testPath, testVideo)
+        facesPath = os.path.join(testPath, fileBase.split('.')[0])
+        faces = glob.glob(os.path.join(facesPath, '*.png'))
+        numFrames = len(faces)
+        videoNP = load_avi.load_avi_into_nparray(videoPath, frameHeight, frameWidth, 0, numFrames)
+        facesNP = load_avi.load_face_into_nparray(facesPath, frameHeightFace, frameWidthFace, 0, numFrames)
+        if modelNo == 0:
+            xTest = videoNP
+        elif modelNo == 1:
+            xTest = [videoNP, facesNP]
+
+        predictionsAll = np.empty((0,numFrames))
+        for weight in weights:
+            cnnModel.load_weights(weight)
+            predictions = cnnModel.predict(xTest, miniBatchSize, verbose)
+            predictionsAll = np.append(predictionsAll, predictions, axis=0)
+        predictions = np.mean(predictionsAll, axis=0)
+        predictions = np.round(predictions)
+        resultFileName = os.path.join(resultsDir, fileBase.split('.')[0] + '.txt')
+        resultFile = open(resultFileName, 'w')
+        resultFile.write(predictions)
+        resultFile.close()
 
 if __name__ == '__main__':
     run_cross_validation(8, 1, 0)
