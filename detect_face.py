@@ -99,7 +99,7 @@ def save_faces_test(start, end):
     else:
         print('Testset found!\n')
         path = '../test'
-        videos = glob.glob(ps.path.join(path, '*.mp4'))
+        videos = glob.glob(os.path.join(path, '*.mp4'))
         videos = videos[start:end]
         for video in videos:
             fileBase = os.path.basename(video)
