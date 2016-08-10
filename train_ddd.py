@@ -446,7 +446,7 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
     
     if trainVar:
         for train_drivers, test_drivers in kf:
-            if foldNum == 0:
+            if foldNum != 1:
                 foldNum += 1
                 continue
             if modelNo == 0:
