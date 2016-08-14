@@ -11,6 +11,7 @@ from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge, Reshap
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.recurrent import LSTM
 from keras.layers.normalization import BatchNormalization
+from keras.layers.advanced_activations import PReLU
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils.visualize_util import plot
@@ -253,98 +254,105 @@ def corr_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
 
     # Convolutional stack for full frame
     model1 = Sequential()
-    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal',
                             input_shape=(1, int(frameHeight1), int(frameWidth1))))
-    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(PReLU())
+    model1.add(BatchNormalization(mode=2))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
-    model1.add(Dropout(0.1))
 
-    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal'))
+    model1.add(PReLU())
+    model1.add(BatchNormalization(mode=2))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
-    model1.add(Dropout(0.2))
 
-    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal'))
+    model1.add(PReLU())
+    model1.add(BatchNormalization(mode=2))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
-    model1.add(Dropout(0.4))
 
-    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model1.add(MaxPooling2D(pool_size=(4, 4)))
-    model1.add(Dropout(0.4))
-
-    model1.add(Convolution2D(512, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model1.add(Convolution2D(512, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal'))
+    model1.add(PReLU())
     model1.add(BatchNormalization(mode=2))
     model1.add(MaxPooling2D(pool_size=(4, 4)))
-    model1.add(Dropout(0.4))
+
+    model1.add(Convolution2D(512, 3, 3, border_mode='same', init='he_normal'))
+    model1.add(PReLU())
+    model1.add(BatchNormalization(mode=2))
+    model1.add(MaxPooling2D(pool_size=(4, 4)))
 
     model1.add(Reshape((512, 1)))
 
     # Convolutional stack for face ROI
     model2 = Sequential()
-    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal',
                             input_shape=(1, int(frameHeight2), int(frameWidth2))))
-    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(PReLU())
+    model2.add(BatchNormalization(mode=2))
     model2.add(MaxPooling2D(pool_size=(2, 2)))
-    model2.add(Dropout(0.1))
 
-    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal'))
+    model2.add(PReLU())
+    model2.add(BatchNormalization(mode=2))
     model2.add(MaxPooling2D(pool_size=(2, 2)))
-    model2.add(Dropout(0.2))
 
-    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal'))
+    model2.add(PReLU())
+    model2.add(BatchNormalization(mode=2))
     model2.add(MaxPooling2D(pool_size=(2, 2)))
-    model2.add(Dropout(0.2))
 
-    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal'))
+    model2.add(PReLU())
     model2.add(BatchNormalization(mode=2))
     model2.add(MaxPooling2D(pool_size=(8, 8)))
-    model2.add(Dropout(0.2))
 
     # Convolutional stack for face ROI
     model3 = Sequential()
-    model3.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+    model3.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal',
                             input_shape=(1, int(frameHeight2), int(frameWidth2))))
-    model3.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(PReLU())
+    model3.add(BatchNormalization(mode=2))
     model3.add(MaxPooling2D(pool_size=(2, 2)))
-    model3.add(Dropout(0.1))
 
-    model3.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model3.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal'))
+    model3.add(PReLU())
+    model3.add(BatchNormalization(mode=2))
     model3.add(MaxPooling2D(pool_size=(2, 2)))
-    model3.add(Dropout(0.2))
 
-    model3.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model3.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal'))
+    model3.add(PReLU())
+    model3.add(BatchNormalization(mode=2))
     model3.add(MaxPooling2D(pool_size=(2, 2)))
-    model3.add(Dropout(0.2))
 
-    model3.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
-    model3.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal'))
+    model3.add(PReLU())
     model3.add(BatchNormalization(mode=2))
     model3.add(MaxPooling2D(pool_size=(8, 8)))
-    model3.add(Dropout(0.2))
 
     # FC stack with merged convolutional stacks
     model4 = Sequential()
     model4.add(Merge([model2, model3], mode=corr, output_shape=corr_shape))
 
+    merged = Merge([model1, model4], mode='concat', concat_axis=1)
+    
+    modelForward = Sequential()
+    modelForward.add(merged)
+    modelForward.add(LSTM(32))
+
+    modelBackward = Sequential()
+    modelBackward.add(merged)
+    modelBackward.add(LSTM(32, go_backwards=True))
+
     # FC stack with merged convolutional stacks
     model = Sequential()
-    model.add(Merge([model1, model4], mode='concat', concat_axis=1))
-    model.add(Reshape((768, 1)))
+    #model.add(merged)
+    model.add(Merge([modelForward, modelBackward], mode='concat', concat_axis=1))
 
-    model.add(LSTM(64))
-    model.add(BatchNormalization(mode=2))
+    #model.add(LSTM(32))
+    #model.add(BatchNormalization(mode=2))
     model.add(Dense(2))
     model.add(Activation('softmax'))
 
-    model.compile(Adam(lr=1e-3), loss='categorical_crossentropy', metrics=["accuracy"])
+    model.compile(Adam(lr=1e-3), loss='binary_crossentropy', metrics=["accuracy"])
 
     plot(model, to_file='model.png')
 
@@ -398,6 +406,8 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
         # zero mean
         mean = np.mean(xTrain, axis=0)
         xTrain = xTrain - mean
+        xTrain = np.array(xTrain, dtype='int8')
+        xTrain /= 127
         if modelNo == 1:
             xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
             # zero mean
@@ -414,6 +424,10 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
             xFace = xFace - mean
             mean = np.mean(xFace1, axis=0)
             xFace1 = xFace1 - mean
+            xFace = np.array(xFace, dtype='int8')
+            xFace1 = np.array(xFace1, dtype='int8')
+            xFace /= 127
+            xFace1 /= 127
             xTrainFull = [xTrain, xFace1, xFace]
         if modelNo == 0:
             xTrainFull = xTrain
@@ -476,6 +490,9 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
         # zero mean
         mean = np.mean(xValid, axis=0)
         xValid = xValid - mean
+        xValid = np.array(xValid, dtype='int8')
+        xValid /= 127
+
         if modelNo == 1:
             xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
             # zero mean
@@ -491,6 +508,10 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
             xFace = xFace - mean
             mean = np.mean(xFace1, axis=0)
             xFace1 = xFace1 - mean
+            xFace = np.array(xFace, dtype='int8')
+            xFace1 = np.array(xFace1, dtype='int8')
+            xFace /= 127
+            xFace1 /= 127
             xValidFull = [xValid, xFace1, xFace]
 
         if modelNo == 0:
@@ -537,6 +558,9 @@ def validate(model, validationTarget, validationId):
         # zero mean
         mean = np.mean(xValid, axis=0)
         xValid = xValid - mean
+        xValid = np.array(xValid, dtype='int8')
+        xValid /= 127
+
         if modelNo == 1:
             xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
             # zero mean
@@ -553,6 +577,10 @@ def validate(model, validationTarget, validationId):
             xFace = xFace - mean
             mean = np.mean(xFace1, axis=0)
             xFace1 = xFace1 - mean
+            xFace = np.array(xFace, dtype='int8')
+            xFace1 = np.array(xFace1, dtype='int8')
+            xFace /= 127
+            xFace1 /= 127
             xValidFull = [xValid, xFace1, xFace]
 
         if modelNo == 0:
