@@ -10,13 +10,16 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge, Reshape
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.recurrent import LSTM
+from keras.layers.normalization import BatchNormalization
 from keras.optimizers import Adam
 from keras.regularizers import l2
 from keras.utils.visualize_util import plot
 from keras.utils import np_utils
 from keras.callbacks import Callback
 import matplotlib.pyplot as plt
+import scipy
 
+from keras import backend as K
 #from multiprocessing import Pool, Array
 #import threading
 #import multiprocessing
@@ -67,17 +70,17 @@ def CNN_model(frameHeight, frameWidth):
     model.add(Dropout(0.2))
 
     model.add(Flatten())
-    
+
     model.add(Dense(32, W_regularizer=l2(1.26e-7)))
-    model.add(Activation('relu'))     
+    model.add(Activation('relu'))
 
     model.add(Dense(2, W_regularizer=l2(1e-0)))
     model.add(Activation('softmax'))
 
     model.compile(Adam(lr=1e-3), loss='categorical_crossentropy')
-    
+
     plot(model, to_file='model.png')
-    
+
     return model
 
 def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
@@ -147,9 +150,9 @@ def two_inputs_cnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
     model.add(Activation('softmax'))
 
     model.compile(Adam(lr=1e-3), loss='categorical_crossentropy', metrics=["accuracy"])
-    
+
     plot(model, to_file='model.png')
-    
+
     return model
 
 def two_inputs_cnn_rnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
@@ -170,12 +173,12 @@ def two_inputs_cnn_rnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth
     model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(MaxPooling2D(pool_size=(2, 2)))
-    model1.add(Dropout(0.2))
+    model1.add(Dropout(0.4))
 
     model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
     model1.add(MaxPooling2D(pool_size=(8, 8)))
-    #model1.add(Dropout(0.2))
+    #model1.add(Dropout(0.8))
 
     # Convolutional stack for face ROI
     model2 = Sequential()
@@ -229,7 +232,124 @@ def two_inputs_cnn_rnn_model(frameHeight1, frameWidth1, frameHeight2, frameWidth
     plot(model, to_file='model.png')
 
     return model
-    
+
+def corr(inputs):
+    prev = inputs[0]
+    curr = inputs[1]
+    output = prev * curr
+    output = output.sum(axis=2)
+    output = output.sum(axis=2)
+    print output.shape
+    output = K.reshape(output, (output.shape[0], output.shape[1], 1))
+    return output
+
+def corr_shape(input_shape):
+    'Merge output shape'
+    shape = list(input_shape)
+    outshape = (shape[0][0], shape[0][1], 1)
+    return tuple(outshape)
+
+def corr_model(frameHeight1, frameWidth1, frameHeight2, frameWidth2):
+
+    # Convolutional stack for full frame
+    model1 = Sequential()
+    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+                            input_shape=(1, int(frameHeight1), int(frameWidth1))))
+    model1.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.1))
+
+    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.2))
+
+    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(2, 2)))
+    model1.add(Dropout(0.4))
+
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(MaxPooling2D(pool_size=(4, 4)))
+    model1.add(Dropout(0.4))
+
+    model1.add(Convolution2D(512, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(Convolution2D(512, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model1.add(BatchNormalization(mode=2))
+    model1.add(MaxPooling2D(pool_size=(4, 4)))
+    model1.add(Dropout(0.4))
+
+    model1.add(Reshape((512, 1)))
+
+    # Convolutional stack for face ROI
+    model2 = Sequential()
+    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+                            input_shape=(1, int(frameHeight2), int(frameWidth2))))
+    model2.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.1))
+
+    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.2))
+
+    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(MaxPooling2D(pool_size=(2, 2)))
+    model2.add(Dropout(0.2))
+
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model2.add(BatchNormalization(mode=2))
+    model2.add(MaxPooling2D(pool_size=(8, 8)))
+    model2.add(Dropout(0.2))
+
+    # Convolutional stack for face ROI
+    model3 = Sequential()
+    model3.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu',
+                            input_shape=(1, int(frameHeight2), int(frameWidth2))))
+    model3.add(Convolution2D(32, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(MaxPooling2D(pool_size=(2, 2)))
+    model3.add(Dropout(0.1))
+
+    model3.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(Convolution2D(64, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(MaxPooling2D(pool_size=(2, 2)))
+    model3.add(Dropout(0.2))
+
+    model3.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(Convolution2D(128, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(MaxPooling2D(pool_size=(2, 2)))
+    model3.add(Dropout(0.2))
+
+    model3.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(Convolution2D(256, 3, 3, border_mode='same', init='he_normal', activation='relu'))
+    model3.add(BatchNormalization(mode=2))
+    model3.add(MaxPooling2D(pool_size=(8, 8)))
+    model3.add(Dropout(0.2))
+
+    # FC stack with merged convolutional stacks
+    model4 = Sequential()
+    model4.add(Merge([model2, model3], mode=corr, output_shape=corr_shape))
+
+    # FC stack with merged convolutional stacks
+    model = Sequential()
+    model.add(Merge([model1, model4], mode='concat', concat_axis=1))
+    model.add(Reshape((768, 1)))
+
+    model.add(LSTM(64))
+    model.add(BatchNormalization(mode=2))
+    model.add(Dense(2))
+    model.add(Activation('softmax'))
+
+    model.compile(Adam(lr=1e-3), loss='categorical_crossentropy', metrics=["accuracy"])
+
+    plot(model, to_file='model.png')
+
+    return model
+
 def train(model, crossTrainTarget, crossTrainId, epoch):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
     frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
@@ -239,7 +359,7 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
     verbose = read_config('verbose')
     debugMode = read_config('debugMode')
     modelNo = read_config('modelNo')
-    
+
     numBatches = math.ceil(len(crossTrainTarget)/batchSize)
     batchCount = 0
     itemsDone = 0
@@ -251,6 +371,7 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
 
     #plotting
     #plt.figure(figsize=(6, 3))
+    '''
     plt.axis([0, numBatches, 0, 20])
     plt.ylabel('error')
     plt.xlabel('iteration')
@@ -259,8 +380,9 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
     yPlotTrainLoss = []
     yPlotTrainAccuracy = []
     xPlot = []
-            
-    while itemsDone < len(crossTrainTarget):
+    '''
+
+    while itemsDone < 500: #len(crossTrainTarget):
         print('\nTraining Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
         if(len(crossTrainTarget) - itemsDone) < batchSize:
             batchList = crossTrainId[itemsDone:]
@@ -271,7 +393,7 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
             yTrain = crossTrainTarget[itemsDone:itemsDone+batchSize]
             itemsDone += batchSize
 
-        yTrain = np_utils.to_categorical(yTrain, 2)          
+        yTrain = np_utils.to_categorical(yTrain, 2)
         xTrain = load_data.read_train_data_avi(frameHeight, frameWidth, batchList)
         # zero mean
         mean = np.mean(xTrain, axis=0)
@@ -281,6 +403,18 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
             # zero mean
             mean = np.mean(xFace, axis=0)
             xFace = xFace - mean
+        elif modelNo == 2:
+            xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+            #xFace1 = xFace
+            xFace1 = np.ones((1, 1, frameHeightFace, frameWidthFace), dtype=xFace.dtype)
+            xFace1 = np.append(xFace1, xFace[:-1, :, :, :], axis=0)
+
+            # zero mean
+            mean = np.mean(xFace, axis=0)
+            xFace = xFace - mean
+            mean = np.mean(xFace1, axis=0)
+            xFace1 = xFace1 - mean
+            xTrainFull = [xTrain, xFace1, xFace]
         if modelNo == 0:
             xTrainFull = xTrain
         elif modelNo == 1:
@@ -288,25 +422,27 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
 
         print('Loaded data')
         if debugMode:
-            print('xTrain shape:{}'.format(xTrainFull[0].shape + xTrainFull[1].shape))
+            print('xTrain shape:{}'.format(xTrainFull[0].shape + xTrainFull[1].shape + xTrainFull[2].shape))
             print('yTrain shape:{}'.format(yTrain.shape))
 
         model.fit(xTrainFull, yTrain, miniBatchSize, miniNumEpochs, verbose, callbacks=[history])
         # plotting
         loss = np.array(history.losses)
         accuracy = np.array(history.accuracy)
+        '''
         xPlot.append(batchCount)
         yPlotTrainLoss.append(np.mean(loss))
         yPlotTrainAccuracy.append(0.69)
         plt.plot(xPlot, yPlotTrainLoss)
         plt.plot(xPlot, yPlotTrainAccuracy)
         plt.pause(0.05)
-        
+        '''
+
         batchCount += 1
 
     print('Training Epoch done')
     return model, history
-        
+
 def cross_validate(model, crossValidTarget, crossValidId, epoch):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
     frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
@@ -314,7 +450,7 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
     miniBatchSize = read_config('miniBatchSize')
     verbose = read_config('verbose')
     modelNo = read_config('modelNo')
-    
+
     numBatches = math.ceil(len(crossValidTarget)/batchSize)
     itemsDone = 0
     batchCount = 0
@@ -323,8 +459,8 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
     xValidFull = []
     batchList = []
     validationScore = 0
-    
-    while itemsDone < len(crossValidTarget):
+
+    while itemsDone < 500: #len(crossValidTarget):
         print('\nCross Validation Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
         if(len(crossValidTarget) - itemsDone) < batchSize:
             batchList = crossValidId[itemsDone:]
@@ -335,7 +471,7 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
             yValid = crossValidTarget[itemsDone:itemsDone+batchSize]
             itemsDone += batchSize
 
-        yValid = np_utils.to_categorical(yValid, 2)       
+        yValid = np_utils.to_categorical(yValid, 2)
         xValid = load_data.read_train_data_avi(frameHeight, frameWidth, batchList)
         # zero mean
         mean = np.mean(xValid, axis=0)
@@ -345,6 +481,18 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
             # zero mean
             mean = np.mean(xFace, axis=0)
             xFace = xFace - mean
+        elif modelNo == 2:
+            xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
+            xFace1 = np.ones((1, 1, frameHeightFace, frameWidthFace), dtype=xFace.dtype)
+            xFace1 = np.append(xFace1, xFace[:-1, :, :, :], axis=0)
+
+            # zero mean
+            mean = np.mean(xFace, axis=0)
+            xFace = xFace - mean
+            mean = np.mean(xFace1, axis=0)
+            xFace1 = xFace1 - mean
+            xValidFull = [xValid, xFace1, xFace]
+
         if modelNo == 0:
             xValidFull = xValid
         elif modelNo == 1:
@@ -353,11 +501,11 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
         predictions = model.predict(xValidFull, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
         batchCount += 1
-        
+
     validationScore /= numBatches
     print('Cross Validation Score:{}'.format(validationScore))
     return validationScore
-    
+
 def validate(model, validationTarget, validationId):
     frameHeight, frameWidth = read_config('frameHeight'), read_config('frameWidth')
     frameHeightFace, frameWidthFace = read_config('frameHeightFace'), read_config('frameWidthFace')
@@ -365,7 +513,7 @@ def validate(model, validationTarget, validationId):
     miniBatchSize = read_config('miniBatchSize')
     verbose = read_config('verbose')
     modelNo = read_config('modelNo')
-    
+
     numBatches = math.ceil(len(validationTarget)/batchSize)
     itemsDone = 0
     xValid, yValid = [], []
@@ -373,7 +521,7 @@ def validate(model, validationTarget, validationId):
     xValidFull = []
     batchList = []
     validationScore = 0
-    
+
     while itemsDone < len(validationTarget):
         if(len(validationTarget) - itemsDone) < batchSize:
             batchList = validationId[itemsDone:]
@@ -394,6 +542,19 @@ def validate(model, validationTarget, validationId):
             # zero mean
             mean = np.mean(xFace, axis=0)
             xFace = xFace - mean
+        elif modelNo == 2:
+            xFace = load_data.read_validation_data_img(frameHeightFace, frameWidthFace, batchList)
+            #xFace1 = xFace
+            xFace1 = np.ones((1, 1, frameHeightFace, frameWidthFace), dtype=xFace.dtype)
+            xFace1 = np.append(xFace1, xFace[:-1, :, :, :], axis=0)
+
+            # zero mean
+            mean = np.mean(xFace, axis=0)
+            xFace = xFace - mean
+            mean = np.mean(xFace1, axis=0)
+            xFace1 = xFace1 - mean
+            xValidFull = [xValid, xFace1, xFace]
+
         if modelNo == 0:
             xValidFull = xValid
         elif modelNo == 1:
@@ -401,16 +562,16 @@ def validate(model, validationTarget, validationId):
 
         predictions = model.predict(xValidFull, miniBatchSize, verbose)
         validationScore += log_loss(yValid, predictions)
-        
+
     validationScore /= numBatches
     print('Validation Score:{}'.format(validationScore))
     return validationScore
-    
+
 '''
     There are 18 unique drivers in training set
-    16 for training and 
+    16 for training and
     2 for cross-validation
-    
+
     There are 4 unique drivers in evaluation set
 '''
 def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
@@ -422,7 +583,7 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
     numEpochs = read_config('numEpochs')
     debugMode = read_config('debugMode')
     modelNo = read_config('modelNo')
-    
+
     driverId, trainId, trainTarget, uniqueDrivers = load_data.read_train_targets()
     validationId, validationTarget = load_data.read_validation_targets()
     numUniqueDrivers = 18
@@ -431,47 +592,50 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
     cnnModel = Sequential()
     # Splitting the training data into train set and validation set in k combinations
     kf = KFold(numUniqueDrivers, n_folds=numFolds, shuffle=True, random_state=randomState)
- 
+
     if not os.path.isdir('fold_loss'):
         os.mkdir('fold_loss')
     historyFileName = './fold_loss/history.txt'
     historyFile = open(historyFileName, 'w')
     historyFile.write('Fold, Loss\n')
     historyFile.close()
-    
+
     if debugMode:
         print uniqueDrivers
         print('Training set length:{}'.format(len(trainTarget)))
         print('Validation set length:{}'.format(len(validationTarget)))
-    
+
     if trainVar:
         for train_drivers, test_drivers in kf:
-            if foldNum != 1:
+            if foldNum != 0:
                 foldNum += 1
                 continue
+            print('ModelNo:{}'.format(modelNo))
             if modelNo == 0:
                 cnnModel = CNN_model(frameHeight, frameWidth)
             elif modelNo == 1:
                 cnnModel = two_inputs_cnn_rnn_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
- 
+            elif modelNo == 2:
+                cnnModel = corr_model(frameHeight, frameWidth, frameHeightFace, frameWidthFace)
+
             uniqueListTrain = [uniqueDrivers[i] for i in train_drivers]
             crossTrainTarget, crossTrainId, crossTrainDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListTrain)
             uniqueListValid = [uniqueDrivers[i] for i in test_drivers]
-            crossValidTarget, crossValidId, crossValidDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListValid)        
-        
+            crossValidTarget, crossValidId, crossValidDriverId = load_data.copy_selected_drivers(trainTarget, trainId, driverId, uniqueListValid)
+
             print('\nStart KFold number {} from {}'.format(foldNum+1, numFolds))
             print('Split train: ', len(crossTrainTarget))
             print('Split valid: ', len(crossValidTarget))
             print('Train drivers: ', uniqueListTrain)
             print('Test drivers: ', uniqueListValid)
-        
+
             prevScore = 10000
             minScore = 10000
             patienceCount = 0
 
             #plotting
             #plt.figure(figsize=(6, 3))
-            plt.axis([0, numFolds, 0, 20])
+            plt.axis([1, numEpochs, 0, 20])
             plt.ylabel('error')
             plt.xlabel('iteration')
             plt.title('Training error')
@@ -479,20 +643,23 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
             yPlotTrainLoss = []
             yPlotTrainAccuracy = []
             xPlot = []
-        
             for epoch in range(int(numEpochs)):
                 print ('Epoch {} of {}'.format(epoch+1, numEpochs))
-            
+
+                #if epoch == 0:
+                #    cnnModel.load_weights('../weights/weight0.h5')
+
                 cnnModel, history = train(cnnModel, crossTrainTarget, crossTrainId, epoch)
                 # plotting
                 loss = np.array(history.losses)
                 accuracy = np.array(history.accuracy)
                 yPlotTrainLoss.append(np.mean(loss))
-                yPlotTrainAccuracy.append(0.69)
-                xPlot.append(epoch)
+                #yPlotTrainAccuracy.append(0.69)
+                xPlot.append(epoch+1)
                 plt.plot(xPlot, yPlotTrainLoss)
-                plt.plot(xPlot, yPlotTrainAccuracy)
+                #plt.plot(xPlot, yPlotTrainAccuracy)
                 plt.pause(0.05)
+
                 validationScore = cross_validate(cnnModel, crossValidTarget, crossValidId, epoch)
 
                 if validationScore < minScore:
@@ -504,28 +671,29 @@ def run_cross_validation(numFolds=8, trainVar=1, validateVar=0):
                         os.mkdir(os.path.dirname(fileName))
                     cnnModel.save_weights(filepath=fileName, overwrite=True)
                     minScore = validationScore
-                
+
                 if validationScore > prevScore:
                     patienceCount += 1
-                
+
                 if patienceFactor < patienceCount:
                     historyFile = open(historyFileName, 'a')
                     historyFile.write('{}, {}'.format(foldNum, minScore))
                     historyFile.close()
                     break
-            
+
                 if epoch == numEpochs-1:
                     historyFile = open(historyFileName, 'a')
                     historyFile.write('{}, {}'.format(foldNum, minScore))
                     historyFile.close()
-            
+
                 prevScore = validationScore
-            
+
+            plt.savefig('training.png')
             foldNum += 1
 
     elif validateVar:
         validate(cnnModel, validationTarget, validationId)
-        
+
     print('Exiting main function\n')
     
 def run_test():
@@ -589,5 +757,4 @@ def run_test():
 if __name__ == '__main__':
     run_cross_validation(8, 1, 0)
     #run_test()
-                
-            
+
