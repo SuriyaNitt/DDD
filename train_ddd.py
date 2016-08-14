@@ -382,7 +382,7 @@ def train(model, crossTrainTarget, crossTrainId, epoch):
     xPlot = []
     '''
 
-    while itemsDone < 500: #len(crossTrainTarget):
+    while itemsDone < len(crossTrainTarget):
         print('\nTraining Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
         if(len(crossTrainTarget) - itemsDone) < batchSize:
             batchList = crossTrainId[itemsDone:]
@@ -460,7 +460,7 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
     batchList = []
     validationScore = 0
 
-    while itemsDone < 500: #len(crossValidTarget):
+    while itemsDone < len(crossValidTarget):
         print('\nCross Validation Batch {} of {} and epoch {}'.format(batchCount+1, numBatches, epoch))
         if(len(crossValidTarget) - itemsDone) < batchSize:
             batchList = crossValidId[itemsDone:]
