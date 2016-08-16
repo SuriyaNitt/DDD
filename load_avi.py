@@ -10,6 +10,7 @@ import os
 '''
 
 def load_avi_into_nparray(fileName, frameHeight, frameWidth, startFrame, endFrame):
+    print fileName
     video = cv2.VideoCapture(fileName)
     numFrames = 0
     debugMode = read_config('debugMode')
@@ -131,6 +132,7 @@ def load_processed_avi_into_nparray(fileName, frameHeight, frameWidth, startFram
     return videoNP
 
 def load_face_into_nparray(filePath, frameHeight, frameWidth, startFrame, endFrame):
+    print('{}-{} to {}'.format(filePath, startFrame, endFrame))
     debugMode = read_config('debugMode')
 
     if not os.path.isdir(filePath):
