@@ -552,8 +552,9 @@ def cross_validate(model, crossValidTarget, crossValidId, epoch):
             xFace = xFace - mean
         elif modelNo == 2:
             xFace = load_data.read_train_data_img(frameHeightFace, frameWidthFace, batchList)
-            xFace1 = np.ones((1, 1, frameHeightFace, frameWidthFace), dtype=xFace.dtype)
-            xFace1 = np.append(xFace1, xFace[:-1, :, :, :], axis=0)
+            xFace1 = np.zeros((89, 1, frameHeightFace, frameWidthFace), dtype=xFace.dtype)
+            xFace1 = np.append(xFace1, np.mean(substrings(90, xFace),  axis=1), axis=0)
+            #xFace1 = np.append(xFace1, xFace[:-1, :, :, :], axis=0)
 
             # zero mean
             mean = np.mean(xFace, axis=0)
